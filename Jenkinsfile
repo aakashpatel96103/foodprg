@@ -72,6 +72,7 @@ pipeline {
                     for /f "delims=" %%C in ('kubectl config current-context') do (
                         if /I "%%C"=="minikube" minikube image load %IMAGE%
                         if /I "%%C"=="kind-kind" kind load docker-image %IMAGE%
+                        if /I "%%C"=="docker-desktop" docker save %IMAGE% | docker exec -i desktop-control-plane ctr --namespace k8s.io images import -
                     )
                 '''
             }
