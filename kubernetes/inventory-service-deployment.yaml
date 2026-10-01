@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: food-ordering-service
+  namespace: food-ordering
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: food-ordering-service
+  template:
+    metadata:
+      labels:
+        app: food-ordering-service
+    spec:
+      containers:
+        - name: food-ordering-service
+          image: food-ordering-service:1.0.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: food-ordering-config
+            - secretRef:
+                name: food-ordering-secret
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20

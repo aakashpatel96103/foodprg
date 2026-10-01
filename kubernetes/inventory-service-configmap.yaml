@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: food-ordering-config
+  namespace: food-ordering
+data:
+  APP_NAME: Online Food Ordering System
+  APP_VERSION: "1.0.0"
