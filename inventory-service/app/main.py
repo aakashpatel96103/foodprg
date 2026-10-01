@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
@@ -7,8 +8,6 @@ from pydantic import BaseModel, Field
 from prometheus_fastapi_instrumentator import Instrumentator
 
 DB = Path(__file__).with_name("food_ordering.db")
-app = FastAPI(title="Online Food Ordering System", version="1.0.0")
-Instrumentator().instrument(app).expose(app)
 
 def db():
     c = sqlite3.connect(DB)
@@ -22,9 +21,13 @@ def init_db():
         c.execute("CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY AUTOINCREMENT,restaurant_id INTEGER NOT NULL,customer_name TEXT NOT NULL,customer_phone TEXT NOT NULL,item_name TEXT NOT NULL,quantity INTEGER NOT NULL,total_price REAL NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL)")
         c.commit()
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     init_db()
+    yield
+
+app = FastAPI(title="Online Food Ordering System", version="1.0.0", lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)
 
 class Restaurant(BaseModel):
     name: str = Field(min_length=1, max_length=100)
