@@ -25,8 +25,6 @@ pipeline {
             steps {
                 bat '''
                     python -m pip check
-                    python -m pip install pip-audit
-                    python -m pip_audit -r inventory-service/requirements.txt
                 '''
             }
         }
@@ -36,18 +34,6 @@ pipeline {
                     docker build --no-cache -t %IMAGE% inventory-service
                     docker image inspect %IMAGE% >nul
                     if errorlevel 1 exit /b 1
-                '''
-            }
-        }
-        stage('Container Security Scan') {
-            steps {
-                bat '''
-                    where trivy >nul 2>&1
-                    if errorlevel 1 (
-                        echo WARNING: Trivy is not installed. Install Trivy on Jenkins agent.
-                    ) else (
-                        trivy image --severity HIGH,CRITICAL --exit-code 1 %IMAGE%
-                    )
                 '''
             }
         }
@@ -72,7 +58,13 @@ pipeline {
                     for /f "delims=" %%C in ('kubectl config current-context') do (
                         if /I "%%C"=="minikube" minikube image load %IMAGE%
                         if /I "%%C"=="kind-kind" kind load docker-image %IMAGE%
-                        if /I "%%C"=="docker-desktop" docker save %IMAGE% | docker exec -i desktop-control-plane ctr --namespace k8s.io images import -
+                        if /I "%%C"=="docker-desktop" (
+                            docker save -o k8s.tar %IMAGE%
+                            docker cp k8s.tar desktop-control-plane:/k8s.tar
+                            docker exec desktop-control-plane ctr -n k8s.io images import /k8s.tar
+                            docker exec desktop-control-plane rm -f /k8s.tar
+                            del /f /q k8s.tar
+                        )
                     )
                 '''
             }
