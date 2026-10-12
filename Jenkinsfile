@@ -11,12 +11,12 @@ pipeline {
             steps { checkout scm }
         }
         stage('Install Dependencies') {
-            steps { bat 'python -m pip install -r inventory-service/requirements.txt' }
+            steps { bat 'python -m pip install -r Food--Ordering-Service/requirements.txt' }
         }
         stage('Run Tests') {
             steps {
                 bat '''
-                    cd inventory-service
+                    cd Food--Ordering-Service
                     python -m pytest tests -v
                 '''
             }
@@ -31,7 +31,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat '''
-                    docker build --no-cache -t %IMAGE% inventory-service
+                    docker build --no-cache -t %IMAGE% Food--Ordering-Service
                     docker image inspect %IMAGE% >nul
                     if errorlevel 1 exit /b 1
                 '''
@@ -47,8 +47,8 @@ pipeline {
                 bat '''
                     kubectl apply -f kubernetes/namespace.yaml
                     kubectl apply -f kubernetes/monitoring/namespace.yaml
-                    kubectl apply -f kubernetes/inventory-service-configmap.yaml
-                    kubectl apply -f kubernetes/inventory-service-secret.yaml
+                    kubectl apply -f kubernetes/Food--Ordering-Service-configmap.yaml
+                    kubectl apply -f kubernetes/Food--Ordering-Service-secret.yaml
                 '''
             }
         }
@@ -72,8 +72,8 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 bat '''
-                    kubectl apply -f kubernetes/inventory-service-deployment.yaml
-                    kubectl apply -f kubernetes/inventory-service.yaml
+                    kubectl apply -f kubernetes/Food--Ordering-Service-deployment.yaml
+                    kubectl apply -f kubernetes/Food--Ordering-Service.yaml
                     kubectl rollout status deployment/%APP_NAME% -n %NAMESPACE% --timeout=180s
                 '''
             }
